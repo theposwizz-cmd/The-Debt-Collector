@@ -1,0 +1,320 @@
+@import "tailwindcss";
+
+/* ---------- Theme: case-file concept, modern execution. Light by default, dark optional. ---------- */
+
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --surface-2: #f1eee7;
+  --ink: #111113;
+  --ink-soft: #3c3c42;
+  --muted: #85858c;
+  --line: #e8e5dd;
+  --own-bg: #111113;
+  --own-fg: #f7f5f0;
+  --other-bg: #e1eafb; /* soft blue so other people's messages stand out */
+
+  /* Accent + statuses. *-text variants are tuned for contrast on light surfaces. */
+  --red: #e5484d;
+  --red-text: #d13438;
+  --red-soft: rgba(229, 72, 77, 0.1);
+  --amber: #e0902f;
+  --amber-text: #a8661a;
+  --amber-soft: rgba(224, 144, 47, 0.13);
+  --green: #30a46c;
+  --green-text: #218358;
+  --green-soft: rgba(48, 164, 108, 0.12);
+
+  --shadow-sm: 0 1px 2px rgba(17, 17, 19, 0.04), 0 1px 1px rgba(17, 17, 19, 0.03);
+  --shadow-md: 0 1px 2px rgba(17, 17, 19, 0.04), 0 10px 28px -14px rgba(17, 17, 19, 0.18);
+  --shadow-lg: 0 2px 6px rgba(17, 17, 19, 0.05), 0 32px 70px -28px rgba(17, 17, 19, 0.32);
+  --frame-bg: #e9e6de;
+
+  /* Physical "key" buttons: a darker bottom lip + soft drop shadow, both shrink on press. */
+  --key-lip: #000000;
+  --key-glow: rgba(17, 17, 19, 0.42);
+  --key2-lip: #d6d1c5;
+  --key2-glow: rgba(17, 17, 19, 0.16);
+  --key-hl: rgba(255, 255, 255, 0.1);
+  --key2-hl: rgba(255, 255, 255, 0.75);
+  --hat-edge: transparent; /* the inspector's black hat needs a rim only on dark backgrounds */
+
+  /* Chart series: validated categorical palette (fixed order, follows the person). */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #101014;
+  --surface: #18181d;
+  --surface-2: #1f1f25;
+  --ink: #ececec;
+  --ink-soft: #c4c4c9;
+  --muted: #8a8a93;
+  --line: #2a2a31;
+  --own-bg: #ececec;
+  --own-fg: #101014;
+  --other-bg: #1d2a42;
+
+  --red: #e5484d;
+  --red-text: #ff6b6f;
+  --red-soft: rgba(229, 72, 77, 0.16);
+  --amber: #e0902f;
+  --amber-text: #f0a64e;
+  --amber-soft: rgba(224, 144, 47, 0.16);
+  --green: #30a46c;
+  --green-text: #4cc38a;
+  --green-soft: rgba(48, 164, 108, 0.17);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 30px -16px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 40px 80px -30px rgba(0, 0, 0, 0.85);
+  --frame-bg: #08080a;
+
+  --key-lip: #9c9ca3;
+  --key-glow: rgba(0, 0, 0, 0.65);
+  --key2-lip: #050507;
+  --key2-glow: rgba(0, 0, 0, 0.6);
+  --key-hl: rgba(255, 255, 255, 0.35);
+  --key2-hl: rgba(255, 255, 255, 0.04);
+  --hat-edge: rgba(255, 255, 255, 0.28);
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-own: var(--own-bg);
+  --color-own-fg: var(--own-fg);
+  --color-other: var(--other-bg);
+  --color-red: var(--red);
+  --color-red-text: var(--red-text);
+  --color-red-soft: var(--red-soft);
+  --color-amber: var(--amber);
+  --color-amber-text: var(--amber-text);
+  --color-amber-soft: var(--amber-soft);
+  --color-green: var(--green);
+  --color-green-text: var(--green-text);
+  --color-green-soft: var(--green-soft);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  /* Springs as CSS easing curves (no animation library). */
+  --ease-spring: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%, 1.001 85.9%, 1);
+  --ease-bounce: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--frame-bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Structural label: uppercase mono, tracked. */
+.label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+/* Pill badge with a subtle "stamped" character: tint, inner ring, slight tilt. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 11%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 32%, transparent);
+  transform: rotate(var(--badge-rot, -1.5deg));
+}
+.badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.badge.no-dot::before {
+  display: none;
+}
+
+/* The hero: SETTLED / PAID drops in and lands with a spring. */
+@keyframes stamp-press {
+  0% {
+    opacity: 0;
+    transform: scale(1.9) rotate(-14deg);
+    filter: blur(2px);
+  }
+  30% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--badge-rot, -1.5deg));
+  }
+}
+.stamp-press {
+  animation: stamp-press 0.75s var(--ease-bounce) both;
+}
+
+/* Messages fade + slide in on a soft spring. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: rise 0.5s var(--ease-spring) both;
+}
+
+/* Popovers scale in from their anchor. */
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-pop {
+  animation: pop 0.32s var(--ease-spring) both;
+  transform-origin: top right;
+}
+
+/* Tactile press on buttons. */
+.press {
+  transition: transform 0.35s var(--ease-spring), background-color 0.15s, color 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+.press:active:not(:disabled) {
+  transform: scale(0.96);
+  transition-duration: 0.08s;
+}
+
+@keyframes blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+.dot {
+  animation: blink 1.2s infinite both;
+}
+.dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Physical keys (PressButton). Framer Motion moves them; the lip/shadow follows :active. */
+.key {
+  box-shadow: 0 3px 0 0 var(--key-lip), 0 14px 26px -14px var(--key-glow);
+  transition: box-shadow 0.18s ease;
+}
+.key2 {
+  box-shadow: 0 3px 0 0 var(--key2-lip), 0 12px 22px -14px var(--key2-glow), inset 0 0 0 1px var(--line);
+  transition: box-shadow 0.18s ease;
+}
+.key:active:not(:disabled) {
+  box-shadow: 0 1px 0 0 var(--key-lip), 0 4px 10px -6px var(--key-glow);
+  transition-duration: 0.06s;
+}
+.key2:active:not(:disabled) {
+  box-shadow: 0 1px 0 0 var(--key2-lip), 0 3px 8px -6px var(--key2-glow), inset 0 0 0 1px var(--line);
+  transition-duration: 0.06s;
+}
+
+/* Chart lines draw in once, left to right. */
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.chart-draw {
+  stroke-dasharray: 1;
+  animation: draw-line 0.9s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-draw,
+  .stamp-press,
+  .animate-rise,
+  .animate-pop,
+  .dot {
+    animation: none;
+  }
+  .press:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}

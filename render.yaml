@@ -1,0 +1,24 @@
+# Render Blueprint: one Node web service that serves the API and the built React app.
+# Render → New → Blueprint → pick this repo. You'll be asked for the three secrets below.
+services:
+  - type: web
+    name: debt-collector
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      # Free tier disk is ephemeral: the database resets on every redeploy/restart and the
+      # demo is re-seeded automatically. With a paid persistent disk mounted at /var/data,
+      # set DATABASE_PATH=/var/data/debt-collector.db and UPLOAD_DIR=/var/data/uploads.
+      - key: AI_RATE_LIMIT_PER_MIN
+        value: "20"

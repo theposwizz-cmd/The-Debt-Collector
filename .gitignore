@@ -1,0 +1,23 @@
+# dependencies and builds
+node_modules/
+dist/
+build/
+coverage/
+
+# secrets: only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# local data (SQLite database, uploaded receipts, backups)
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+
+# OS / editor / tooling
+.DS_Store
+Thumbs.db
+*.log
+.claude/
