@@ -13,7 +13,15 @@ const LINES: Record<LoadingMode, string> = {
 // Calm status lines for a slow (e.g. free-tier, waking) server. Never "error"-looking.
 const WAITING = ["Opening case file…", "Waking the records room…", "Dusting off the ledger…", "Still here. The Collector is patient."];
 
-const MIN_MS: Record<LoadingMode, number> = { intro: 1100, quick: 0, seeding: 500 };
+const MIN_MS: Record<LoadingMode, number> = { intro: 3200, quick: 0, seeding: 500 };
+
+// First visit: the bar fills over the intro while these lines tick by (ms from start).
+const INTRO_STEPS: [number, string][] = [
+  [0, "Opening the case file…"],
+  [900, "Checking who owes whom…"],
+  [1900, "Sharpening the pencil…"],
+  [2700, "All accounted for."],
+];
 
 /**
  * Branded loading sequence. Dismisses itself as soon as `ready` (after a short minimum so the
@@ -65,10 +73,15 @@ export function LoadingScreen({
     return () => clearTimeout(id);
   }, [finishing, onDone, neverShown]);
   const text = LINES[mode];
+  // The first-visit intro fills its bar over MIN_MS; past that (slow server) it falls back to the sweep.
+  const introFill = mode === "intro" && !finishing && elapsed < MIN_MS.intro;
+  const introStep = [...INTRO_STEPS].reverse().find(([at]) => elapsed >= at)?.[1] ?? "";
   const status =
     slowNote && elapsed > 60_000
       ? "Can't reach the server yet. Still trying…"
-      : elapsed > 3000
+      : mode === "intro" && elapsed < MIN_MS.intro + 300
+        ? introStep
+        : elapsed > 3000
         ? WAITING[Math.floor((elapsed - 3000) / 4000) % WAITING.length]
         : mode === "seeding"
           ? "Five subjects, one villa, one boat, one very long memory."
@@ -142,7 +155,14 @@ export function LoadingScreen({
       {/* the one loop: a stamp-style progress bar sweeping until ready, then filling */}
       <div className="relative mt-7 h-[3px] w-44 overflow-hidden rounded-full bg-line">
         {finishing ? (
-          <motion.div className="absolute inset-y-0 left-0 rounded-full bg-ink" initial={{ width: "35%" }} animate={{ width: "100%" }} transition={{ duration: 0.22 }} />
+          <motion.div
+            className="absolute inset-y-0 left-0 rounded-full bg-ink"
+            initial={{ width: mode === "intro" ? "92%" : "35%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 0.22 }}
+          />
+        ) : introFill ? (
+          <div className="intro-fill absolute inset-y-0 left-0 rounded-full bg-ink" style={{ animationDuration: `${MIN_MS.intro}ms` }} />
         ) : (
           <motion.div
             className="absolute inset-y-0 w-1/3 rounded-full bg-ink"

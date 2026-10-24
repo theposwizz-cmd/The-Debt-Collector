@@ -203,6 +203,17 @@ body {
 }
 
 /* The hero: SETTLED / PAID drops in and lands with a spring. */
+/* First-visit loader: the progress bar fills steadily (duration set inline to match the intro). */
+@keyframes intro-fill {
+  from {
+    width: 0%;
+  }
+}
+.intro-fill {
+  width: 92%;
+  animation: intro-fill 3.2s cubic-bezier(0.3, 0.1, 0.25, 1) both;
+}
+
 @keyframes stamp-press {
   0% {
     opacity: 0;
@@ -324,6 +335,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .chart-draw,
   .stamp-press,
+  .intro-fill,
   .animate-rise,
   .animate-pop,
   .dot {
