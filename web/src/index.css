@@ -131,9 +131,22 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
+}
+
+/* The app is exactly one screen tall and its panels scroll inside it, so the page itself never
+   overflows (no stray document scroll for the browser to restore on reload). dvh follows the
+   mobile address bar as it shows/hides; vh is the fallback for browsers without dvh. */
+#root {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Inner scroll panels: momentum scrolling on older iOS. */
+.scroll-y {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {

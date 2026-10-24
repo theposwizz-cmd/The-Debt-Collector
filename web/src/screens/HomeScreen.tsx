@@ -131,14 +131,14 @@ export function HomeScreen({
   return (
     <motion.div
       ref={scroller}
-      className={`no-scrollbar flex h-full flex-col px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 ${settling ? "overflow-hidden" : "overflow-y-auto"}`}
+      className={`no-scrollbar flex h-full flex-col px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 ${settling ? "overflow-hidden" : "scroll-y"}`}
       initial="hidden"
       animate="shown"
       exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
       variants={{ shown: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } } }}
     >
       {/* case-file header motif */}
-      <motion.header variants={rise} className="flex items-center gap-2 border-b border-line pb-3">
+      <motion.header variants={rise} className="flex shrink-0 items-center gap-2 border-b border-line pb-3">
         <span className="label !text-[10px] text-red-text">Case file · No. 0247</span>
         <span className="label rounded-full px-1.5 py-[2px] !text-[8.5px] text-muted ring-1 ring-line">Confidential</span>
         <button
@@ -162,7 +162,8 @@ export function HomeScreen({
       </motion.header>
 
       {/* identity: centred hero, or (once tucked) the sign up top as a header */}
-      <div className={`flex flex-1 flex-col items-center text-center ${tucked ? "justify-start pb-4 pt-6" : "justify-center py-8"}`}>
+      <div className={`flex flex-1 shrink-0 flex-col items-center text-center ${tucked ? "pb-4 pt-6" : "py-8"}`}>
+        <div className={`flex w-full flex-col items-center ${tucked ? "" : "my-auto"}`}>
         <motion.div variants={rise} layout transition={GLIDE} className="relative z-10 w-full">
           <InspectorHero phase={phase === "hung" ? "tucked" : phase} entrance={tuck === "none"} />
         </motion.div>
@@ -200,10 +201,11 @@ export function HomeScreen({
             <CaseList cases={cases} currentId={currentId} onOpen={onOpenCase} busy={busy} />
           </motion.div>
         )}
+        </div>
       </div>
 
       {/* actions */}
-      <motion.div variants={rise} className="space-y-3">
+      <motion.div variants={rise} className="shrink-0 space-y-3">
         <PressButton
           onClick={onDemo}
           disabled={busy}
@@ -218,7 +220,7 @@ export function HomeScreen({
         {error && <div className="rounded-2xl border border-red/30 bg-red-soft px-3.5 py-2.5 text-[13px] text-red-text">{error}</div>}
       </motion.div>
 
-      <motion.p variants={rise} className="label mt-4 text-center !text-[9px] text-amber-text">
+      <motion.p variants={rise} className="label mt-4 shrink-0 text-center !text-[9px] text-amber-text">
         {quip}
       </motion.p>
     </motion.div>

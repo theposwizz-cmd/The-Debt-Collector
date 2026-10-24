@@ -76,7 +76,7 @@ export function LoadingScreen({
 
   return (
     <motion.div
-      className="relative flex h-full flex-col items-center justify-center overflow-hidden px-8 text-center"
+      className="no-scrollbar scroll-y relative flex h-full flex-col items-center overflow-x-hidden px-8 text-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: hiddenForNow ? 0 : 1 }}
       exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.25 } }}
@@ -84,6 +84,9 @@ export function LoadingScreen({
       aria-busy={!finishing}
       aria-live="polite"
     >
+      {/* Equal spacers above and below centre the content when it fits; when it doesn't they
+          collapse to nothing, so it scrolls from the top instead of being clipped above it. */}
+      <div aria-hidden className="min-h-6 flex-1" />
       {/* the Collector springs in */}
       <motion.div
         initial={{ scale: 0.6, y: 14, opacity: 0 }}
@@ -167,6 +170,8 @@ export function LoadingScreen({
         </AnimatePresence>
       </div>
       {slowNote && elapsed > 60_000 && <div className="mt-1 max-w-[280px] break-words font-mono text-[10.5px] text-muted">{slowNote}</div>}
+
+      <div aria-hidden className="min-h-16 flex-1" />
 
       {/* Skip, after 1 s */}
       {onSkip && (

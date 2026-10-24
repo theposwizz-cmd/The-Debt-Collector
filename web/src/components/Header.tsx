@@ -333,7 +333,7 @@ export function Header({
             </div>
 
             {subjectsOpen && (
-              <div className="animate-pop max-h-[42vh] overflow-y-auto border-t border-line px-3 py-1" style={{ transformOrigin: "top center" }}>
+              <div className="animate-pop scroll-y max-h-[42dvh] border-t border-line px-3 py-1" style={{ transformOrigin: "top center" }}>
                 <div className="divide-y divide-line">
                   {subjects.map((s) => (
                     <div key={s.memberId} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2.5">

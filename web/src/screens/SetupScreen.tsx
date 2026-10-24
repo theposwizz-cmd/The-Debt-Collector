@@ -160,7 +160,7 @@ export function SetupScreen({ onCancel, onDone }: { onCancel: () => void; onDone
       </div>
 
       {/* the current question, sliding */}
-      <div className="no-scrollbar relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-5">
+      <div className="no-scrollbar scroll-y relative min-h-0 flex-1 overflow-x-hidden px-5">
         <AnimatePresence mode="popLayout" custom={dir} initial={false}>
           <motion.div key={step} custom={dir} variants={slide} initial="enter" animate="center" exit="exit" transition={SLIDE} className="pb-6 pt-6">
             <div className="label !text-[10px] text-red-text">

@@ -79,7 +79,9 @@ function readSpeakers(): Record<string, number> {
 
 function EmptyState({ onDemo, busy, onSend }: { onDemo: () => void; busy: boolean; onSend: (t: string) => void }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-8 text-center">
+    <div className="flex flex-1 shrink-0 flex-col items-center px-6 py-8 text-center">
+      {/* my-auto centres when there's room and collapses to 0 when there isn't (top stays reachable) */}
+      <div className="my-auto flex w-full flex-col items-center">
       <div className="animate-rise w-full max-w-[340px] rounded-[24px] border border-line bg-surface px-6 pb-6 pt-8 shadow-lg">
         <div className="flex justify-center">
           <AppIcon size={56} />
@@ -108,6 +110,7 @@ function EmptyState({ onDemo, busy, onSend }: { onDemo: () => void; busy: boolea
       >
         “New group for our Hvar trip. It's me, Ana, Luka and Marko. Euros.”
       </button>
+      </div>
     </div>
   );
 }
@@ -369,7 +372,7 @@ export default function App() {
     <MotionConfig reducedMotion="user">
     <div className="flex h-full items-stretch justify-center sm:items-center sm:p-5">
       <div className="relative w-full max-w-[460px]">
-      <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-bg sm:h-[min(900px,calc(100dvh-40px))] sm:rounded-[32px] sm:border sm:border-line sm:shadow-lg">
+      <div className="relative flex h-full w-full flex-col overflow-hidden bg-bg sm:h-[min(900px,100%)] sm:rounded-[32px] sm:border sm:border-line sm:shadow-lg">
         <AnimatePresence mode="wait" initial={false}>
         {screen === "loading" ? (
           <LoadingScreen
@@ -461,8 +464,8 @@ export default function App() {
           </div>
         )}
         {/* The composer lives inside the scroller (sticky), so the log slides under it and blurs. */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          <div className="flex flex-1 flex-col">
+        <main className="scroll-y flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-1 shrink-0 flex-col">
           {!state ? (
             <div className="flex flex-1 items-center justify-center text-sm text-muted">Loading…</div>
           ) : messages.length === 0 ? (
