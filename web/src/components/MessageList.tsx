@@ -1,4 +1,4 @@
-import { Fragment, useContext, useEffect, useRef, useState } from "react";
+import { Fragment, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ChatMessage, PaymentCheckResult, Transfer } from "../types";
 import { AppIcon, Avatar, CardView, PayPalButton, SettledTick, Stamp, type StampTone } from "./Cards";
 import { MeContext } from "./me";
@@ -352,7 +352,9 @@ export function MessageList({
 }) {
   const end = useRef<HTMLDivElement>(null);
   const firstScroll = useRef(true);
-  useEffect(() => {
+  // Layout effect, not effect: it runs before the browser paints, so on load/refresh the first
+  // frame is already at the newest message (an effect would paint the top of the log, then jump).
+  useLayoutEffect(() => {
     // Scroll the chat's scroller to its very end (the composer sits inside it, so aligning the
     // last message with the viewport bottom would leave it hidden behind the composer).
     const scroller = end.current?.closest("main");
