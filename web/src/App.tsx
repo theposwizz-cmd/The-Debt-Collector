@@ -359,14 +359,6 @@ export default function App() {
   }, [state, messages]);
 
   const missing = state && (!state.config.anthropic || !state.config.paypal);
-  // Keys present but the live self-check failed: say so loudly, with the real error.
-  const failedChecks =
-    state?.selfcheck.status === "done"
-      ? ([
-          ["Claude", state.config.anthropic, state.selfcheck.claude],
-          ["PayPal", state.config.paypal, state.selfcheck.paypal],
-        ] as const).filter(([, keySet, r]) => keySet && r && !r.ok)
-      : [];
 
   return (
     <MotionConfig reducedMotion="user">
@@ -430,7 +422,6 @@ export default function App() {
             onCheckPayments={() => run(() => api.checkPayments().then((r) => r.state))}
             theme={theme}
             onTheme={setTheme}
-            onSelfCheck={() => run(api.selfCheck)}
             onOpenCase={(id) => run(() => api.openGroup(id))}
             onHome={() => {
               // The duck-and-glide plays only the first time; after that Home opens already settled.
@@ -448,18 +439,6 @@ export default function App() {
               {!state!.config.anthropic && "ANTHROPIC_API_KEY missing. "}
               {!state!.config.paypal && "PayPal sandbox keys missing. "}
               Add them to <span className="font-mono">.env</span> and restart.
-            </span>
-          </div>
-        )}
-        {failedChecks.length > 0 && (
-          <div className="flex gap-2 border-b border-red/25 bg-red-soft px-4 py-2 text-[12px] text-red-text">
-            <span className="label shrink-0 pt-[1px] !text-[9.5px]">Self-check</span>
-            <span className="min-w-0 break-words">
-              {failedChecks.map(([name, , r]) => (
-                <span key={name} className="block">
-                  <span className="font-semibold">{name} failed:</span> {r!.detail}
-                </span>
-              ))}
             </span>
           </div>
         )}

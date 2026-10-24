@@ -34,8 +34,6 @@ export const api = {
     post(`/api/transfers/${id}/check`).then((r) => json<{ result: PaymentCheckResult | null; state: AppState }>(r)),
   /** Check every open PayPal request now. */
   checkPayments: () => post("/api/paypal/check").then((r) => json<{ checked: number; state: AppState }>(r)),
-  /** Run the live integration self-check (real Claude + PayPal calls). */
-  selfCheck: () => post("/api/selfcheck").then((r) => json<AppState>(r)),
   /** New-group survey -> a ready case. Returns the new state plus your member id. */
   createGroup: (body: {
     purpose: string;

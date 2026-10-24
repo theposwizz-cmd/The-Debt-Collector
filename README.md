@@ -154,7 +154,7 @@ The repo includes a [`render.yaml`](render.yaml) Blueprint: **Render → New →
 Notes for the free tier:
 - **The disk is ephemeral.** The SQLite database is wiped on every redeploy or restart. On an empty database the server seeds the Hvar Trip demo at startup, and **Load demo group** always rebuilds it from code and the bundled sample receipt, so the demo never depends on saved data. For persistence, attach a disk and set `DATABASE_PATH` / `UPLOAD_DIR` onto it.
 - **It sleeps when idle.** The first request after a nap takes 30–50 s while Render wakes the service; the app's loading screen waits and retries calmly. Ping `GET /healthz` (returns `200 {"ok":true}`) to wake it before a demo.
-- **Abuse protection.** Endpoints that spend Claude credits (chat messages, receipt uploads, demo fast-forward, self-check) are limited per visitor IP, 20 per minute by default. A normal demo never gets near it; past it, the visitor gets a polite "try again in Ns".
+- **Abuse protection.** Endpoints that spend Claude credits (chat messages, receipt uploads, demo fast-forward) are limited per visitor IP, 20 per minute by default. A normal demo never gets near it; past it, the visitor gets a polite "try again in Ns".
 
 ### Get an Anthropic API key
 
@@ -173,21 +173,13 @@ Optional: set `ANTHROPIC_MODEL` in `.env` to use another Claude model.
 
 The app only talks to `api-m.sandbox.paypal.com`. Live mode is not wired up on purpose.
 
-### Integration self-check
-
-On startup, and from **⋯ → Run self-check**, the server makes real calls:
-- **Claude:** one tiny live request. It reports the model that answered.
-- **PayPal:** a fresh sandbox OAuth token plus one read-only Invoicing API call.
-
-The menu shows Claude ✓/✗ and PayPal ✓/✗ with the actual error text, and a red banner appears if a configured key fails. The same results are printed in the server console at startup.
-
 ### Receipt photos
 
 Receipts can be JPEG, PNG, WebP, GIF or **HEIC/HEIF** (iPhone). HEIC is converted to JPEG on the server, and large photos are rotated upright and downscaled to 2000 px so they stay under Claude's image limit. If a photo can't be read or converted, the chat says exactly why. `samples/receipt-tommy-iphone.heic` is a HEIC sample for testing.
 
 ### Troubleshooting: `UNABLE_TO_VERIFY_LEAF_SIGNATURE`
 
-If the self-check says Claude or PayPal "could not be reached" with a certificate error, something on your machine is inspecting HTTPS traffic (antivirus HTTPS scanning or a company proxy). The server already trusts the operating system's certificate store in addition to Node's own. If it still fails, add that tool's root certificate to the OS store, or point `NODE_EXTRA_CA_CERTS` at it.
+If Claude or PayPal calls fail with "could not be reached" and a certificate error, something on your machine is inspecting HTTPS traffic (antivirus HTTPS scanning or a company proxy). The server already trusts the operating system's certificate store in addition to Node's own. If it still fails, add that tool's root certificate to the OS store, or point `NODE_EXTRA_CA_CERTS` at it.
 
 ### Instant chips
 

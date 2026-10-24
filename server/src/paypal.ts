@@ -193,15 +193,6 @@ export const REFUND_STATUSES = new Set(["REFUNDED", "PARTIALLY_REFUNDED", "MARKE
 /** Closed without payment: nothing more will arrive on this invoice. */
 export const CANCELLED_STATUSES = new Set(["CANCELLED"]);
 
-/** Self-check: a fresh OAuth token plus one read-only Invoicing call. Throws the real error. */
-export async function checkPaypal(): Promise<string> {
-  token = null; // force a real token request, not the cache
-  await accessToken();
-  const list = await pp("GET", "/v2/invoicing/invoices?page=1&page_size=1&total_required=true");
-  const count = list.total_items ?? list.items?.length ?? 0;
-  return `OAuth token issued; Invoicing API reachable (${count} invoice${count === 1 ? "" : "s"} on this sandbox account).`;
-}
-
 /** Cancel a sent invoice (or delete a draft). Used when a settle-up is reissued. */
 export async function cancelInvoice(id: string): Promise<void> {
   const { status } = await getInvoice(id);

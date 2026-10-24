@@ -76,23 +76,8 @@ export interface AppState {
   balances: { memberId: number; name: string; netCents: number; budgetCents: number | null; spentCents: number }[];
   clock: { now: number; offsetDays: number };
   config: { anthropic: boolean; paypal: boolean; model: string };
-  selfcheck: SelfCheck;
   /** Every saved case, most recently active first. */
   cases: CaseSummary[];
-}
-
-export interface CheckResult {
-  ok: boolean;
-  detail: string;
-  ms: number | null;
-}
-
-/** Result of the live integration self-check (real Claude + PayPal calls). */
-export interface SelfCheck {
-  status: "idle" | "running" | "done";
-  at: number | null;
-  claude: CheckResult | null;
-  paypal: CheckResult | null;
 }
 
 export interface CaseSummary {

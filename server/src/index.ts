@@ -9,7 +9,6 @@ import { bus, emit, type BusEvent } from "./events.js";
 import * as L from "./ledger.js";
 import { loadDemo } from "./demo.js";
 import { quickReply, type QuickKind } from "./quickcards.js";
-import { runSelfCheck, selfCheckState } from "./selfcheck.js";
 import { createGroupFromSetup, SetupError } from "./setup.js";
 import { startScheduler, tick } from "./scheduler.js";
 import { recordManualPayment, settleUpInChat, viewTransfer } from "./settlement.js";
@@ -71,7 +70,6 @@ function state() {
     })),
     clock: { now: now(), offsetDays: Math.round((getOffsetMs() / DAY_MS) * 10) / 10 },
     config: configStatus(),
-    selfcheck: selfCheckState(),
     cases: L.listGroups(),
   };
 }
@@ -81,17 +79,6 @@ function state() {
 app.get("/api/health", (_req, res) => res.json({ ok: true, ...configStatus() }));
 
 app.get("/api/state", (_req, res) => res.json(state()));
-
-// Integration self-check (real Claude + PayPal calls). Also runs once at startup.
-app.get("/api/selfcheck", (_req, res) => res.json(selfCheckState()));
-app.post("/api/selfcheck", aiLimit, async (_req, res, next) => {
-  try {
-    await runSelfCheck();
-    res.json(state());
-  } catch (err) {
-    next(err);
-  }
-});
 
 app.get("/api/stream", (req, res) => {
   res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
@@ -339,10 +326,4 @@ app.listen(PORT, () => {
   console.log(`  Claude model: ${cfg.model}  |  Anthropic key: ${cfg.anthropic ? "set" : "MISSING"}  |  PayPal sandbox: ${cfg.paypal ? "set" : "MISSING"}`);
   if (!cfg.anthropic || !cfg.paypal) console.log("  Copy .env.example to .env and fill in the keys. Features needing a missing key will show a clear error.");
   startScheduler();
-  runSelfCheck().then((r) => {
-    const line = (name: string, c: typeof r.claude) => `  ${name}: ${c?.ok ? "OK" : "FAILED"}${c ? ` — ${c.detail}` : ""}${c?.ms != null ? ` (${c.ms} ms)` : ""}`;
-    console.log("Self-check (live calls):");
-    console.log(line("Claude", r.claude));
-    console.log(line("PayPal", r.paypal));
-  });
 });

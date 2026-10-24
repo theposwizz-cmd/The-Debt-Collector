@@ -1,9 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 
 /**
- * Per-IP limit for routes that spend Anthropic credits (chat, receipts, nudges via fast-forward,
- * self-check). A sliding one-minute window, in memory: enough to stop a public visitor hammering
- * the key, generous enough that a normal demo never notices.
+ * Per-IP limit for routes that spend Anthropic credits (chat, receipts, nudges via fast-forward).
+ * A sliding one-minute window, in memory: enough to stop a public visitor hammering the key,
+ * generous enough that a normal demo never notices.
  */
 export function aiRateLimit(perMinute = Number(process.env.AI_RATE_LIMIT_PER_MIN) || 20, windowMs = 60_000) {
   const hits = new Map<string, number[]>();

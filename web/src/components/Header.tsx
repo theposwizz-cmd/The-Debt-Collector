@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { AppState, ChatMessage, CheckResult } from "../types";
+import type { AppState, ChatMessage } from "../types";
 import { AppIcon, Avatar, Stamp, type StampTone } from "./Cards";
 import { caseNumber } from "./CaseList";
 
@@ -64,50 +64,6 @@ function BudgetBar({ budget, spent, currency }: { budget: number; spent: number;
   );
 }
 
-/** Live integration status: real calls, with the actual error when one fails. */
-function SelfCheckPanel({ state, onRun }: { state: AppState; onRun: () => void }) {
-  const sc = state.selfcheck;
-  const running = sc.status === "running";
-  const row = (name: string, r: CheckResult | null) => (
-    <div className="py-1.5">
-      <div className="flex items-center gap-2 text-[13px]">
-        <span
-          className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${
-            running ? "bg-muted" : !r ? "bg-line" : r.ok ? "bg-green" : "bg-red"
-          }`}
-          aria-label={running ? "checking" : !r ? "not run" : r.ok ? "passed" : "failed"}
-        >
-          {running ? "…" : !r ? "" : r.ok ? "✓" : "✗"}
-        </span>
-        <span className="font-medium">{name}</span>
-        {r?.ms != null && !running && <span className="tabular ml-auto font-mono text-[10px] text-muted">{r.ms} ms</span>}
-      </div>
-      {r && !running && (
-        <div className={`mt-1 break-words pl-[26px] text-[11.5px] leading-snug ${r.ok ? "text-muted" : "text-red-text"}`}>{r.detail}</div>
-      )}
-    </div>
-  );
-  return (
-    <div className="max-w-[300px] px-3 pb-1.5 pt-1">
-      <div className="label pb-1 text-muted">Integration self-check</div>
-      {row("Claude", sc.claude)}
-      {row("PayPal sandbox", sc.paypal)}
-      <div className="mt-1.5 flex items-center justify-between gap-2">
-        <span className="font-mono text-[10px] text-muted">
-          {running ? "Running live calls…" : sc.at ? `Checked ${new Date(sc.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Not run yet"}
-        </span>
-        <button
-          onClick={onRun}
-          disabled={running}
-          className="press shrink-0 whitespace-nowrap rounded-full bg-ink px-3 py-1.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.06em] text-own-fg disabled:opacity-50"
-        >
-          {running ? "Checking…" : "Run self-check"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 const STATUS_DOT: Record<string, string> = { Overdue: "bg-red", Outstanding: "bg-amber", Settled: "bg-green" };
 
 export function Header({
@@ -122,7 +78,6 @@ export function Header({
   onCheckPayments,
   theme,
   onTheme,
-  onSelfCheck,
   onHome,
   onOpenCase,
   busy,
@@ -138,7 +93,6 @@ export function Header({
   onCheckPayments: () => void;
   theme: Theme;
   onTheme: (t: Theme) => void;
-  onSelfCheck: () => void;
   onHome: () => void;
   onOpenCase: (id: number) => void;
   busy: boolean;
@@ -272,8 +226,6 @@ export function Header({
                 </button>
               ))}
             </div>
-            <div className="mx-2 my-1.5 h-px bg-line" />
-            <SelfCheckPanel state={state} onRun={onSelfCheck} />
           </Popover>
         </div>
       </div>
