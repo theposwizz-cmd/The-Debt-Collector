@@ -24,6 +24,8 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "1mb" }));
 const aiLimit = aiRateLimit();
+// Manual PayPal checks don't spend Claude credits, but each is a real PayPal call.
+const paypalLimit = aiRateLimit(30);
 
 // Liveness probe for the host and uptime pings: no database, no AI, always fast.
 app.get("/healthz", (_req, res) => res.status(200).json({ ok: true, uptime: Math.round(process.uptime()) }));
@@ -157,6 +159,33 @@ app.post("/api/quick", (req, res) => {
 
 // "Mark as settled" on a request: paid outside PayPal (cash, bank). Books the payment and,
 // if there's a PayPal invoice, marks it paid there too.
+// "Check payment now": ask PayPal about one request right away instead of waiting for the poll.
+// Goes through the scheduler's queue, so it can't double-book a payment the poller just saw.
+app.post("/api/transfers/:id/check", paypalLimit, async (req, res, next) => {
+  try {
+    const t = L.getTransfer(Number(req.params.id));
+    if (!t || t.group_id !== L.currentGroup().id) return res.status(404).json({ error: "No such request" });
+    if (!t.paypal_invoice_id) return res.status(409).json({ error: "This request has no PayPal invoice to check." });
+    if (!configStatus().paypal) return res.status(503).json({ error: "PayPal sandbox keys are missing, so payments can't be checked." });
+    const [outcome] = await tick({ forcePaypal: true, transferId: t.id });
+    res.json({ result: outcome ?? null, state: state() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Check every open PayPal request now (all cases), then run the usual pass.
+app.post("/api/paypal/check", paypalLimit, async (_req, res, next) => {
+  try {
+    if (!configStatus().paypal) return res.status(503).json({ error: "PayPal sandbox keys are missing, so payments can't be checked." });
+    const outcomes = await tick({ forcePaypal: true });
+    const counts = outcomes.reduce<Record<string, number>>((acc, o) => ((acc[o.kind] = (acc[o.kind] ?? 0) + 1), acc), {});
+    res.json({ checked: outcomes.length, counts, results: outcomes.map((o) => ({ id: o.transfer.id, kind: o.kind, status: o.status, message: o.message })), state: state() });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.post("/api/transfers/:id/settle", async (req, res, next) => {
   try {
     const g = L.currentGroup();

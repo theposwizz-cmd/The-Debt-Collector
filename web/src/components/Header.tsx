@@ -119,6 +119,7 @@ export function Header({
   onReset,
   onFastForward,
   onResetClock,
+  onCheckPayments,
   theme,
   onTheme,
   onSelfCheck,
@@ -134,6 +135,7 @@ export function Header({
   onReset: () => void;
   onFastForward: (days: number) => void;
   onResetClock: () => void;
+  onCheckPayments: () => void;
   theme: Theme;
   onTheme: (t: Theme) => void;
   onSelfCheck: () => void;
@@ -204,6 +206,15 @@ export function Header({
               <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-surface-2 font-mono text-[12px]">↺</span>
               Back to real time
             </button>
+            {state.config.paypal && (
+              <>
+                <div className="mx-2 my-1.5 h-px bg-line" />
+                <button className={item} disabled={busy} onClick={() => (onCheckPayments(), setClock(false))}>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-surface-2 font-mono text-[12px]">⟳</span>
+                  Check all payments now
+                </button>
+              </>
+            )}
           </Popover>
         </div>
 

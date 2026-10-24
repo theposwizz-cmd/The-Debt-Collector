@@ -1,5 +1,5 @@
-import { Fragment, useContext, useEffect, useRef } from "react";
-import type { ChatMessage, Transfer } from "../types";
+import { Fragment, useContext, useEffect, useRef, useState } from "react";
+import type { ChatMessage, PaymentCheckResult, Transfer } from "../types";
 import { AppIcon, Avatar, CardView, PayPalButton, SettledTick, Stamp, type StampTone } from "./Cards";
 import { MeContext } from "./me";
 
@@ -133,11 +133,13 @@ function SettleRequest({
   live,
   fresh,
   onSettle,
+  onCheck,
 }: {
   m: ChatMessage;
   live: Map<number, Transfer>;
   fresh: Set<number>;
   onSettle: (transferId: number) => void;
+  onCheck: (transferId: number) => Promise<PaymentCheckResult | null>;
 }) {
   const me = useContext(MeContext);
   const d = m.data ?? {};
@@ -212,6 +214,71 @@ function SettleRequest({
       {open && (me === d.debtor || me === d.creditor) && !t?.invoiceUrl && (t?.error ?? d.error) && (
         <div className="mt-2 text-[12px] leading-snug text-muted">{t?.error ?? d.error}</div>
       )}
+      {t?.invoiceId && status !== "cancelled" && <PaymentCheck t={t} onCheck={onCheck} />}
+    </div>
+  );
+}
+
+function ago(ts: number, nowMs: number) {
+  const s = Math.max(0, Math.round((nowMs - ts) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.round(s / 60);
+  return m < 60 ? `${m}m ago` : new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+/**
+ * Live PayPal status under a request: what PayPal last said and when, any failure in full (never
+ * hidden), and "Check payment now" to ask PayPal immediately instead of waiting for the ~15 s poll.
+ */
+function PaymentCheck({ t, onCheck }: { t: Transfer; onCheck: (transferId: number) => Promise<PaymentCheckResult | null> }) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ tone: "ok" | "bad"; text: string } | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (t.status !== "open") return;
+    const id = setInterval(() => setNowMs(Date.now()), 5000);
+    return () => clearInterval(id);
+  }, [t.status]);
+
+  const check = async () => {
+    setBusy(true);
+    setNote(null);
+    try {
+      const r = await onCheck(t.id);
+      if (!r) setNote({ tone: "bad", text: "The PayPal check didn't run." });
+      else if (r.kind === "error") setNote({ tone: "bad", text: r.message });
+      else if (r.kind === "paid") setNote({ tone: "ok", text: `PayPal says ${r.status}. Settled.` });
+      else setNote({ tone: "ok", text: `PayPal says ${r.status}${r.kind === "awaiting" ? ": not paid yet." : "."}` });
+    } catch (e) {
+      setNote({ tone: "bad", text: (e as Error).message });
+    } finally {
+      setBusy(false);
+      setNowMs(Date.now());
+    }
+  };
+
+  // Failures are shown in full to everyone: a silent failure would look exactly like "not paid".
+  const failure = t.status === "open" ? t.error : null;
+  return (
+    <div className="mt-2.5 border-t border-line pt-2.5">
+      <div className="flex items-center gap-2">
+        <span className="label min-w-0 flex-1 truncate !text-[9px] text-muted">
+          PayPal · {t.paypalStatus ?? "unknown"}
+          {t.checkedAt ? ` · checked ${ago(t.checkedAt, nowMs)}` : " · not checked yet"}
+        </span>
+        {t.status === "open" && (
+          <button
+            type="button"
+            onClick={check}
+            disabled={busy}
+            className="press shrink-0 rounded-full border border-line bg-surface px-2.5 py-[5px] font-mono text-[10px] font-medium uppercase tracking-[0.06em] text-ink-soft shadow-sm hover:text-ink disabled:opacity-60"
+          >
+            {busy ? "Checking…" : "Check payment now"}
+          </button>
+        )}
+      </div>
+      {failure && !note && <div className="mt-1.5 text-[12px] leading-snug text-red-text">{failure}</div>}
+      {note && <div className={`mt-1.5 text-[12px] leading-snug ${note.tone === "bad" ? "text-red-text" : "text-muted"}`}>{note.text}</div>}
     </div>
   );
 }
@@ -273,6 +340,7 @@ export function MessageList({
   liveTransfers,
   fresh,
   onSettle,
+  onCheck,
 }: {
   messages: ChatMessage[];
   speakerId: number | null;
@@ -280,6 +348,7 @@ export function MessageList({
   liveTransfers: Map<number, Transfer>;
   fresh: Set<number>;
   onSettle: (transferId: number) => void;
+  onCheck: (transferId: number) => Promise<PaymentCheckResult | null>;
 }) {
   const end = useRef<HTMLDivElement>(null);
   const firstScroll = useRef(true);
@@ -353,7 +422,7 @@ export function MessageList({
                 {m.kind === "nudge" ? (
                   <Notice m={m} live={liveTransfers} fresh={fresh} />
                 ) : m.kind === "settle_request" ? (
-                  <SettleRequest m={m} live={liveTransfers} fresh={fresh} onSettle={onSettle} />
+                  <SettleRequest m={m} live={liveTransfers} fresh={fresh} onSettle={onSettle} onCheck={onCheck} />
                 ) : m.content ? (
                   <div className="inline-block rounded-[18px] rounded-tl-[6px] border border-line bg-surface px-4 py-2.5 text-[15px] leading-[1.45] shadow-sm">
                     <RichText text={m.content} />

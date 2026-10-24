@@ -74,7 +74,12 @@ On trips, each person's share of every expense comes out of what they brought. T
   - Server-side refusal fallback is enabled (`fallbacks: "default"`).
 - **PayPal REST API (sandbox), Invoicing v2**
   - `settle_up` creates and sends one invoice per transfer, and stores the payer link and status.
-  - A background job polls each invoice's status. When an invoice is paid, the ledger records it and the chasing stops.
+  - A background job polls each invoice every ~15 s (`GET /v2/invoicing/invoices/{id}`), matched by the invoice id stored on the request:
+    - `PAID` / `MARKED_AS_PAID`: books the payment, flips the request to SETTLED, posts a confirmation, stops the chasing.
+    - `PARTIALLY_PAID`: says how much arrived; the request stays open until it's paid in full.
+    - `CANCELLED` (on PayPal's side): loud error, the debt stays open. `REFUNDED`: the payment is removed and the debt reopens.
+    - A failed check (auth, network, unknown invoice) is logged and shown on the request in full. It's never treated as paid or as "not paid yet".
+  - Every poll is logged on the server (`[paypal] #12 INV2-… Marko → Filip €90: SENT, not paid yet`). **Check payment now** on a request, or **Check all payments now** in the demo clock menu, asks PayPal immediately.
   - When the ledger changes and you settle up again, the old invoices are cancelled and new ones go out.
   - Payments made outside PayPal (cash) are recorded on the invoice with `POST /invoices/{id}/payments`.
 

@@ -77,6 +77,8 @@ CREATE TABLE IF NOT EXISTS transfers (
   paypal_invoice_url  TEXT,
   paypal_status       TEXT,
   paypal_error        TEXT,
+  paypal_checked_at   INTEGER,                         -- real time of the last successful status check
+  paypal_paid_cents   INTEGER,                         -- what PayPal reports as paid (partial payments)
   nudge_count         INTEGER NOT NULL DEFAULT 0,
   last_nudge_at       INTEGER,
   created_at          INTEGER NOT NULL,
@@ -111,6 +113,9 @@ export function openDb(file?: string): DB {
   // Migrations for databases created before a column existed.
   const memberCols = (db.prepare("PRAGMA table_info(members)").all() as { name: string }[]).map((c) => c.name);
   if (!memberCols.includes("budget_cents")) db.exec("ALTER TABLE members ADD COLUMN budget_cents INTEGER");
+  const transferCols = (db.prepare("PRAGMA table_info(transfers)").all() as { name: string }[]).map((c) => c.name);
+  if (!transferCols.includes("paypal_checked_at")) db.exec("ALTER TABLE transfers ADD COLUMN paypal_checked_at INTEGER");
+  if (!transferCols.includes("paypal_paid_cents")) db.exec("ALTER TABLE transfers ADD COLUMN paypal_paid_cents INTEGER");
   return db;
 }
 

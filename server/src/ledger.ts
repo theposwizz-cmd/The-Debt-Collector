@@ -59,6 +59,8 @@ export interface TransferRow {
   paypal_invoice_url: string | null;
   paypal_status: string | null;
   paypal_error: string | null;
+  paypal_checked_at: number | null;
+  paypal_paid_cents: number | null;
   nudge_count: number;
   last_nudge_at: number | null;
   created_at: number;
@@ -528,6 +530,21 @@ export function markTransferPaid(id: number, method: "manual" | "paypal", note?:
   if (t.status !== "open") return t;
   recordPayment({ groupId: t.group_id, fromId: t.from_id, toId: t.to_id, amountCents: t.amount_cents, method, transferId: id, note });
   return updateTransfer(id, { status: "paid", closed_at: now() });
+}
+
+/** PayPal says a payment was refunded: undo the booked payment and reopen the request. */
+export function reopenTransfer(id: number): TransferRow {
+  const t = getTransfer(id);
+  if (t.status !== "paid") return t;
+  getDb().prepare("DELETE FROM payments WHERE transfer_id = ?").run(id);
+  return updateTransfer(id, { status: "open", closed_at: null });
+}
+
+/** Requests closed through PayPal recently: still worth watching for a refund. */
+export function recentlyPaidPaypalTransfers(sinceMs: number): TransferRow[] {
+  return getDb()
+    .prepare("SELECT * FROM transfers WHERE status = 'paid' AND paypal_invoice_id IS NOT NULL AND closed_at >= ? ORDER BY id")
+    .all(sinceMs) as TransferRow[];
 }
 
 // ---------- messages ----------

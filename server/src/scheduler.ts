@@ -7,7 +7,7 @@ import { DAY_MS, now } from "./clock.js";
 import { configStatus } from "./config.js";
 import * as L from "./ledger.js";
 import { formatMoney } from "./money.js";
-import { refreshInvoices } from "./settlement.js";
+import { checkInvoices, type CheckOutcome } from "./settlement.js";
 import { describeAiError } from "./ai/client.js";
 import { levelFor, nudgeDue, writeNudge } from "./ai/nudge.js";
 
@@ -32,45 +32,48 @@ function groupsWithOpenInvoices(): number[] {
   return [...new Set(L.openTransfersAll().filter((t) => t.paypal_invoice_id).map((t) => t.group_id))];
 }
 
-/** Run one pass. If a pass is already running, wait for it and then run a fresh one. */
-export async function tick(opts: { forcePaypal?: boolean } = {}): Promise<void> {
-  while (current) await current;
-  current = runPass(opts).finally(() => {
+/**
+ * Run one pass. If a pass is already running, wait for it and then run a fresh one, so a manual
+ * "check payment now" never races the poller. Returns what the PayPal check found (if it ran).
+ */
+export async function tick(opts: { forcePaypal?: boolean; transferId?: number } = {}): Promise<CheckOutcome[]> {
+  while (current) await current.catch(() => undefined);
+  const pass = runPass(opts);
+  current = pass.then(() => undefined).finally(() => {
     current = null;
   });
-  return current;
+  return pass;
 }
 
-async function runPass(opts: { forcePaypal?: boolean }): Promise<void> {
-  // 1. PayPal: did anyone pay?
+async function runPass(opts: { forcePaypal?: boolean; transferId?: number }): Promise<CheckOutcome[]> {
+  let outcomes: CheckOutcome[] = [];
+  // 1. PayPal: did anyone pay? (Paid / refunded / cancelled events are posted by checkInvoices.)
   if (configStatus().paypal && (opts.forcePaypal || Date.now() - lastPaypalRefresh > PAYPAL_REFRESH_MS)) {
-    lastPaypalRefresh = Date.now();
+    if (!opts.transferId) lastPaypalRefresh = Date.now();
     try {
-      const { paid, errors } = await refreshInvoices();
-      for (const e of errors) postErrorOnce(e.groupId, "paypal", `PayPal payment check failed, so payments won't be detected: ${e.message}`);
-      for (const t of paid) {
-        L.addMessage({
-          groupId: L.getTransfer(t.id).group_id,
-          role: "system",
-          kind: "event",
-          content: `${t.from} paid ${t.to} ${t.amount} via PayPal. Recorded.`,
-          data: { cards: [{ type: "payment", from: t.from, to: t.to, amount: t.amount, method: "paypal" }] },
-        });
+      outcomes = await checkInvoices({ transferId: opts.transferId });
+      for (const o of outcomes) {
+        if (o.kind === "error") {
+          postErrorOnce(L.getTransfer(o.transfer.id).group_id, "paypal", `PayPal payment check failed, so this payment can't be detected yet: ${o.message}`);
+        }
       }
     } catch (err) {
       // e.g. auth failure: payment detection is down for every group that's waiting on PayPal.
+      console.error(`[paypal] poll failed: ${(err as Error).message}`);
       for (const gid of groupsWithOpenInvoices()) {
         postErrorOnce(gid, "paypal", `PayPal payment check failed, so payments won't be detected: ${(err as Error).message}`);
       }
+      if (opts.transferId) throw err;
     }
   }
+  if (opts.transferId) return outcomes; // a manual single check doesn't also run nudges
 
   // 2. Nudges for whatever is still open. They're written by Claude, so without a key there's
   // nothing to send; the UI banner already says the key is missing, so don't spam the chat.
   if (!configStatus().anthropic) {
     if (!warnedNoKey) console.warn("[scheduler] ANTHROPIC_API_KEY missing: payment reminders are paused.");
     warnedNoKey = true;
-    return;
+    return outcomes;
   }
   const t0 = now();
   for (const t of L.openTransfersAll()) {
@@ -125,6 +128,7 @@ async function runPass(opts: { forcePaypal?: boolean }): Promise<void> {
       },
     });
   }
+  return outcomes;
 }
 
 export function startScheduler(): void {

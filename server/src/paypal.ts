@@ -87,8 +87,14 @@ export interface InvoiceResult {
   id: string;
   status: string;
   url: string | null; // PayPal's payer link; null if PayPal didn't return one (we never guess it)
+  /** Invoice total, what PayPal has recorded as paid, and what's still due (cents; null if absent). */
+  amountCents: number | null;
+  paidCents: number | null;
+  dueCents: number | null;
   warning?: string;
 }
+
+const cents = (m: { value?: string } | undefined) => (m?.value != null && m.value !== "" ? Math.round(Number(m.value) * 100) : null);
 
 /** Create a draft invoice (debtor -> creditor), send it, and return the payer link. */
 export async function createAndSendInvoice(input: {
@@ -151,7 +157,15 @@ export async function createAndSendInvoice(input: {
     return await getInvoice(id);
   } catch (err) {
     // It *was* sent, so keep the id; just say we couldn't confirm it.
-    return { id, status: "SENT", url: null, warning: `Invoice ${id} was sent, but reading it back failed: ${(err as Error).message}` };
+    return {
+      id,
+      status: "SENT",
+      url: null,
+      amountCents: input.amountCents,
+      paidCents: null,
+      dueCents: null,
+      warning: `Invoice ${id} was sent, but reading it back failed: ${(err as Error).message}`,
+    };
   }
 }
 
@@ -161,10 +175,23 @@ export async function getInvoice(id: string): Promise<InvoiceResult> {
     id,
     status: inv.status,
     url: inv.detail?.metadata?.recipient_view_url ?? null,
+    amountCents: cents(inv.amount),
+    paidCents: cents(inv.payments?.paid_amount),
+    dueCents: cents(inv.due_amount),
   };
 }
 
+// Invoice statuses (Invoicing v2), grouped by what they mean for a settle-up request.
+/** Fully paid: through PayPal (PAID) or recorded by the invoicer (MARKED_AS_PAID). */
 export const PAID_STATUSES = new Set(["PAID", "MARKED_AS_PAID"]);
+/** Still waiting on the payer. */
+export const AWAITING_STATUSES = new Set(["DRAFT", "SENT", "SCHEDULED", "UNPAID", "PAYMENT_PENDING"]);
+/** Some money arrived, not all. Our invoices disallow partial payment, but PayPal can still report it. */
+export const PARTIAL_STATUSES = new Set(["PARTIALLY_PAID"]);
+/** Money went back to the payer after being paid. */
+export const REFUND_STATUSES = new Set(["REFUNDED", "PARTIALLY_REFUNDED", "MARKED_AS_REFUNDED"]);
+/** Closed without payment: nothing more will arrive on this invoice. */
+export const CANCELLED_STATUSES = new Set(["CANCELLED"]);
 
 /** Self-check: a fresh OAuth token plus one read-only Invoicing call. Throws the real error. */
 export async function checkPaypal(): Promise<string> {

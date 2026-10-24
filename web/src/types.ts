@@ -15,6 +15,16 @@ export interface Transfer {
   invoiceUrl: string | null;
   invoiceId: string | null;
   error: string | null;
+  /** When PayPal was last asked about this invoice (real time, ms). */
+  checkedAt: number | null;
+}
+
+/** What one PayPal status check found, as the server logged it. */
+export interface PaymentCheckResult {
+  kind: "paid" | "partial" | "awaiting" | "cancelled" | "refunded" | "unknown" | "error";
+  status: string | null;
+  message: string;
+  changed: boolean;
 }
 
 export interface ExpenseView {

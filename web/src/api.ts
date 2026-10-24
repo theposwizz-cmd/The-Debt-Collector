@@ -1,4 +1,4 @@
-import type { AppState, ChatMessage } from "./types";
+import type { AppState, ChatMessage, PaymentCheckResult } from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   const body = await res.json().catch(() => ({}));
@@ -29,6 +29,11 @@ export const api = {
   /** Mark a settlement request as paid outside PayPal. */
   settleTransfer: (id: number, speakerId: number | null) =>
     post(`/api/transfers/${id}/settle`, { speakerId }).then((r) => json<AppState>(r)),
+  /** Ask PayPal about one request's invoice right now (instead of waiting for the poll). */
+  checkTransfer: (id: number) =>
+    post(`/api/transfers/${id}/check`).then((r) => json<{ result: PaymentCheckResult | null; state: AppState }>(r)),
+  /** Check every open PayPal request now. */
+  checkPayments: () => post("/api/paypal/check").then((r) => json<{ checked: number; state: AppState }>(r)),
   /** Run the live integration self-check (real Claude + PayPal calls). */
   selfCheck: () => post("/api/selfcheck").then((r) => json<AppState>(r)),
   /** New-group survey -> a ready case. Returns the new state plus your member id. */

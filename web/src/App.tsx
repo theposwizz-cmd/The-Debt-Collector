@@ -424,6 +424,7 @@ export default function App() {
             onReset={() => openSetup("chat")}
             onFastForward={(d) => run(() => api.fastForward(d))}
             onResetClock={() => run(api.resetClock)}
+            onCheckPayments={() => run(() => api.checkPayments().then((r) => r.state))}
             theme={theme}
             onTheme={setTheme}
             onSelfCheck={() => run(api.selfCheck)}
@@ -476,6 +477,11 @@ export default function App() {
                 liveTransfers={liveTransfers}
                 fresh={fresh}
                 onSettle={(id) => run(() => api.settleTransfer(id, speakerId))}
+                onCheck={async (id) => {
+                  const r = await api.checkTransfer(id);
+                  apply(r.state);
+                  return r.result;
+                }}
               />
               </MeProvider>
             </BalancesProvider>
