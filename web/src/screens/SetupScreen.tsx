@@ -265,7 +265,7 @@ export function SetupScreen({ onCancel, onDone }: { onCancel: () => void; onDone
                         <button
                           type="button"
                           onClick={() => setOthers((o) => o.filter((x) => x !== n))}
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
+                          className="press flex h-5 w-5 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
                           aria-label={`Remove ${n}`}
                         >
                           ×
@@ -361,7 +361,7 @@ export function SetupScreen({ onCancel, onDone }: { onCancel: () => void; onDone
                                 key={label}
                                 type="button"
                                 onClick={() => set({ owes: label === "Owes" })}
-                                className={`rounded-full px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.06em] transition-colors ${
+                                className={`press rounded-full px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.06em] ${
                                   active ? (label === "Owes" ? "bg-red text-white" : "bg-green text-white") : "text-muted"
                                 }`}
                               >

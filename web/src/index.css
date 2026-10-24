@@ -253,12 +253,17 @@ body {
   transform-origin: top right;
 }
 
-/* Tactile press on buttons. */
-.press {
+/* Tactile press on buttons: dips and shrinks while held, springs back on release.
+   The :where() rule gives every button and link-button the same press at zero specificity, so
+   any component's own press (the big key buttons, Framer whileTap) still wins. */
+.press,
+:where(button, a[href], [role="button"]) {
   transition: transform 0.35s var(--ease-spring), background-color 0.15s, color 0.15s, box-shadow 0.15s, opacity 0.15s;
+  -webkit-tap-highlight-color: transparent; /* no grey flash on iOS; the press is the feedback */
 }
-.press:active:not(:disabled) {
-  transform: scale(0.96);
+.press:active:not(:disabled),
+:where(button, a[href], [role="button"]):where(:active:not(:disabled)) {
+  transform: translateY(1px) scale(0.96);
   transition-duration: 0.08s;
 }
 
@@ -324,7 +329,8 @@ body {
   .dot {
     animation: none;
   }
-  .press:active:not(:disabled) {
+  .press:active:not(:disabled),
+  :where(button, a[href], [role="button"]):where(:active:not(:disabled)) {
     transform: none;
   }
 }
