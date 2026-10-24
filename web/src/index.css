@@ -130,17 +130,21 @@
   --ease-bounce: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1);
 }
 
+/* App shell: the page itself never scrolls; the app's own panels (.scroll-y) do. On iOS Safari a
+   page that can scroll even a little (100% and 100dvh disagree by the toolbar's height once it
+   collapses) gets that offset restored on refresh, which shows as a bar-sized jump. So the
+   document is locked, and #root is pinned to the visible viewport with position: fixed (one
+   measurement, which tracks the toolbar), instead of a vh/dvh height. */
 html,
 body {
   height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none; /* no rubber-banding the whole page */
 }
 
-/* The app is exactly one screen tall and its panels scroll inside it, so the page itself never
-   overflows (no stray document scroll for the browser to restore on reload). dvh follows the
-   mobile address bar as it shows/hides; vh is the fallback for browsers without dvh. */
 #root {
-  height: 100vh;
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
 }
 
 /* Inner scroll panels: momentum scrolling on older iOS. */

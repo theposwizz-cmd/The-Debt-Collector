@@ -14,6 +14,9 @@
     />
     <script>
       try { if (localStorage.getItem("debt-collector.theme") === "dark") document.documentElement.dataset.theme = "dark"; } catch (e) {}
+      // The page never scrolls (the app's panels do), so there is no position to restore on
+      // refresh; restoring a stale one is what shifted everything by a toolbar's height on iOS.
+      try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (e) {}
     </script>
   </head>
   <body>
